@@ -2,7 +2,7 @@
 """
 Created on Tue Oct 11 16:01:23 2016
 
-Calculating FIM scores.
+Calculating FIM scores as well as clustering using K-means.
 
 @author: viveksagar
 

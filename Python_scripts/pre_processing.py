@@ -9,7 +9,7 @@ import numpy as np
 x1 = pd.ExcelFile("SCD.xlsx")
 df = x1.parse("SelfCare Deidentified")
 
-# Input values
+# Input values, units are number of days.
 batch_size = 7
 batch_size_out = batch_size;
 exclusion_days = 15;
@@ -26,7 +26,7 @@ df.ix[len(df)-1,len(df.columns)-1]=1
 locus_out = df.loc[df['dFIN2'] >0]
 num_out = locus_out.index.values
 
-# Remove the data for those patients that attended less than exclusion days.
+# Remove the data for those patients that attended less than <exclusion> days.
 num_diff = num_out-num_in
 rem_ind = np.where(num_diff<exclusion_days)[0]
 remove_these = num_in[rem_ind]
@@ -38,7 +38,7 @@ for ii in range(len(remove_these)):
         rem_list.append(temp)
 df = df.drop(rem_list)
 
-# Remove those patients entries from num_in and num_out as well.
+# Recompute the first and last rows because the data has been modified.
 locus_in = df.loc[df['dFIN'] >0]
 num_in = locus_in.index.values
 locus_out = df.loc[df['dFIN2'] >0]
