@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Nov  2 13:08:56 2016
+
+@author: viveksagar
+"""
+
 """
 @author: viveksagar (VivekSagar2016@u.northwestern.edu)
 """
@@ -21,24 +28,23 @@ class siamese:
     def __init__(self):
         self.x1 = tf.placeholder(tf.float64, shape=sz)
         self.x2 = tf.placeholder(tf.float64, shape=sz)
-        with tf.variable_scope("siamese") as scope:
+        with tf.variable_scope("siamese", reuse=True):
             self.o1 = self.network(self.x1)
-            scope.reuse_variables()
             self.o2 = self.network(self.x2)
-            self.loss = loss_custom
+            self.loss = loss_custom            
     def network(self, x):
         fc1 = self.fc_layer(x, 128, "fc1")
         ac1 = tf.nn.relu(fc1)
         fc2 = self.fc_layer(ac1, 64, "fc2")
         ac2 = tf.nn.relu(fc2)
-        fc3 = self.fc_layer(ac2, 2, "fc3")
+        fc3 = self.fc_layer(ac2, 1, "fc3")
         return fc3
     def fc_layer(self, bottom, n_weight, name):
         assert len(bottom.get_shape()) == 2
         n_prev_weight = bottom.get_shape()[1]
         initer = tf.truncated_normal_initializer(stddev=0.01)
-        W = tf.get_variable(name+'W', dtype=tf.float64, shape=[n_prev_weight, n_weight], initializer=initer)
-        b = tf.get_variable(name+'b', dtype=tf.float64, initializer=tf.constant(0.01, shape=[n_weight]))
+        W = tf.get_variable(name+'W', shape=[n_prev_weight, n_weight])
+        b = tf.get_variable(name+'b', initializer=tf.constant(0.01, shape=[n_weight]))
         fc = tf.add(tf.matmul(bottom, W), b)
         return fc        
     def loss_custom(self):
@@ -57,8 +63,9 @@ class siamese:
 batch_size = 100
 hm_epochs = 10
 def train_neural_network(xx1,xx2):
-    loss_func = siamese.loss_custom
-    optimizer = tf.train.GradientDescentOptimizer.minimize(loss=loss_func)
+    model = siamese()
+    loss_func = model.loss_custom
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(loss=loss_func)
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())	    
         for epoch in range(hm_epochs):
