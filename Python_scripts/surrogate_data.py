@@ -6,7 +6,7 @@ Surrogate data.
 """
 
 import numpy as np
-sz = (1000,18)
+sz = (1000,21)
 offset = 100
-x1 = offset*np.ones(sz)+np.random.random(sz)
-x2 = offset*np.ones(sz)+np.random.random(sz)
+X1 = 9*offset/10*np.ones(sz)+offset/10*np.random.random(sz)
+X2 = offset/2*np.ones(sz)+offset/2*np.random.random(sz)

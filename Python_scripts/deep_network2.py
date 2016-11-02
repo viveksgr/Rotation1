@@ -3,13 +3,13 @@ import numpy as np
 import pandas as pd
 
 # Get the preprocessed data. X1 and X2 are the entry and exit data.
-X1 = pd.ExcelFile("entry_data.xlsx")
-entry_data = X1.parse("Sheet1")
-X2 = pd.ExcelFile("exit_data.xlsx")
-exit_data = X2.parse("Sheet1")
-X1 = np.array(entry_data.astype(np.float64))
-X2 = np.array(exit_data.astype(np.float64))
-assert np.shape(X1) == np.shape(X2)
+#X1 = pd.ExcelFile("entry_data.xlsx")
+#entry_data = X1.parse("Sheet1")
+#X2 = pd.ExcelFile("exit_data.xlsx")
+#exit_data = X2.parse("Sheet1")
+#X1 = np.array(entry_data.astype(np.float64))
+#X2 = np.array(exit_data.astype(np.float64))
+#assert np.shape(X1) == np.shape(X2)
 sz = np.shape(X1)
 batch_size = 100
 
@@ -19,18 +19,17 @@ class siamese:
     def __init__(self):
         self.x1 = tf.placeholder(tf.float32, shape=(batch_size,sz[1]))
         self.x2 = tf.placeholder(tf.float32, shape=(batch_size,sz[1]))
-        self.dropout_f = tf.placeholder("float")
-        
+        self.dropout_f = tf.placeholder("float")        
         
         with tf.variable_scope("siamese") as scope:
             self.o1= self.build_model_mlp(self.x1, self.dropout_f)
             scope.reuse_variables()
-            self.o2 = self.build_model_mlp(self.x2, self.dropout_f)                   
+            self.o2 = self.build_model_mlp(self.x2, self.dropout_f)
       
         #Loss
         diff = tf.sub(self.o1, self.o2)
-        diff_mean = tf.reduce_mean(diff, 1) 
-        diff_var = tf.sub(tf.reduce_mean(tf.pow(diff,2),1),tf.pow(diff_mean,2))
+        diff_mean = tf.reduce_mean(diff, 0) 
+        diff_var = tf.sub(tf.reduce_mean(tf.pow(diff,2),0),tf.pow(diff_mean,2))
         coeff_var = tf.div(tf.sqrt(diff_var),diff_mean)
         self.loss= tf.reduce_sum(coeff_var)      
 
@@ -39,37 +38,44 @@ class siamese:
         return model
 
     def mlpnet(self, x,_dropout):
-        l1 = self.mlp(x,21,128,"l1")
+        l1 = self.mlp(x,sz[1],12,"l1")
         l1 = tf.nn.dropout(l1,_dropout)
-        l2 = self.mlp(l1,128,64,"l2")
+        l2 = self.mlp(l1,12,6,"l2")
         l2 = tf.nn.dropout(l2,_dropout)
-        l3 = self.mlp(l2,64,1,"l3")
+        l3 = self.mlp(l2,6,1,"l3")
         return l3        
 
     def mlp(self, input_,input_dim,output_dim,name):
         with tf.variable_scope(name, reuse=None):
             w = tf.get_variable('w',[input_dim,output_dim],tf.float32,tf.random_normal_initializer(mean = 0.001,stddev=0.02))
             return tf.nn.relu(tf.matmul(input_,w))
-                                                      
+                                           
 # Training and executing.
 hm_epochs = 10
 def train_neural_network(xx1,xx2):
     model = siamese()
-    print("Model ok")
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(loss=model.loss)
+    print("Model executed successfully.")
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.01).minimize(loss=model.loss)
     with tf.Session() as sess:
         sess.run(tf.initialize_all_variables())	    
         for epoch in range(hm_epochs):
             epoch_loss = 0
+#            O1 = np.array([0])
+#            O2 = np.array([0])
             i=0
             while i < len(xx1)-batch_size:
                 start = i
                 end = i+batch_size
                 batch_x1 = xx1[start:end]
                 batch_x2 = xx2[start:end]
-                _, c = sess.run([optimizer, model.loss], feed_dict={model.x1: batch_x1,model.x2: batch_x2, model.dropout_f: 0.9})
+                _, c, p1, p2 = sess.run([optimizer, model.loss, model.o1, model.o2], feed_dict={model.x1: batch_x1,model.x2: batch_x2, model.dropout_f: 0.9})
                 epoch_loss += c
+#                O1 = np.append(O1, o1)
+#                O2 = np.append(O2, o2)
                 i+=batch_size
-            print('Epoch', epoch+1, 'completed out of',hm_epochs,'loss:',epoch_loss)
+            print('Epoch', epoch+1, '/',hm_epochs,'Loss:',epoch_loss)
+#    O1 = np.delete(O1, (0))
+#    O2 = np.delete(O2, (0))
+    return p1, p2
                 
-train_neural_network(X1,X2)
+[O1, O2] = train_neural_network(X1,X2)
