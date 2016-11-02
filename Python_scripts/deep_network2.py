@@ -1,6 +1,3 @@
-"""
-@author: viveksagar (VivekSagar2016@u.northwestern.edu)
-"""
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -14,13 +11,14 @@ X1 = np.array(entry_data.astype(np.float64))
 X2 = np.array(exit_data.astype(np.float64))
 assert np.shape(X1) == np.shape(X2)
 sz = np.shape(X1)
+batch_size = 100
 
 
 # Network structure and the loss function.
 class siamese:
     def __init__(self):
-        self.x1 = tf.placeholder(tf.float32, shape=(100,21))
-        self.x2 = tf.placeholder(tf.float32, shape=(100,21))
+        self.x1 = tf.placeholder(tf.float32, shape=(batch_size,sz[1]))
+        self.x2 = tf.placeholder(tf.float32, shape=(batch_size,sz[1]))
         self.dropout_f = tf.placeholder("float")
         
         
@@ -54,7 +52,6 @@ class siamese:
             return tf.nn.relu(tf.matmul(input_,w))
                                                       
 # Training and executing.
-batch_size = 100
 hm_epochs = 10
 def train_neural_network(xx1,xx2):
     model = siamese()
