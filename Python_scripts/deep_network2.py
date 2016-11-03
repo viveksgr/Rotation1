@@ -1,17 +1,16 @@
 import tensorflow as tf
 import numpy as np
-import pandas as pd
 
-# Get the preprocessed data. X1 and X2 are the entry and exit data.
-#X1 = pd.ExcelFile("entry_data.xlsx")
-#entry_data = X1.parse("Sheet1")
-#X2 = pd.ExcelFile("exit_data.xlsx")
-#exit_data = X2.parse("Sheet1")
-#X1 = np.array(entry_data.astype(np.float64))
-#X2 = np.array(exit_data.astype(np.float64))
+with np.load('Pre_processed.npz') as data:
+    X1 = data['X1']
+    X2 = data['X2']
+    
 #assert np.shape(X1) == np.shape(X2)
 sz = np.shape(X1)
 batch_size = 100
+nn1 = 64
+nn2 = 32
+nn3 = 1
 
 
 # Network structure and the loss function.
@@ -29,8 +28,8 @@ class siamese:
         #Loss
         diff = tf.sub(self.o1, self.o2)
         diff_mean = tf.reduce_mean(diff, 0) 
-        diff_var = tf.sub(tf.reduce_mean(tf.pow(diff,2),0),tf.pow(diff_mean,2))
-        coeff_var = tf.div(tf.sqrt(diff_var),diff_mean)
+        diff_var = tf.sub(tf.reduce_mean(tf.pow(-diff,2),0),tf.pow(-diff_mean,2))
+        coeff_var = tf.div(diff_mean,tf.sqrt(diff_var))
         self.loss= tf.reduce_sum(coeff_var)      
 
     def build_model_mlp(self, X_,_dropout):
@@ -38,11 +37,11 @@ class siamese:
         return model
 
     def mlpnet(self, x,_dropout):
-        l1 = self.mlp(x,sz[1],12,"l1")
+        l1 = self.mlp(x,sz[1],nn1,"l1")
         l1 = tf.nn.dropout(l1,_dropout)
-        l2 = self.mlp(l1,12,6,"l2")
+        l2 = self.mlp(l1,nn1,nn2,"l2")
         l2 = tf.nn.dropout(l2,_dropout)
-        l3 = self.mlp(l2,6,1,"l3")
+        l3 = self.mlp(l2,nn2,nn3,"l3")
         return l3        
 
     def mlp(self, input_,input_dim,output_dim,name):
@@ -60,8 +59,8 @@ def train_neural_network(xx1,xx2):
         sess.run(tf.initialize_all_variables())	    
         for epoch in range(hm_epochs):
             epoch_loss = 0
-#            O1 = np.array([0])
-#            O2 = np.array([0])
+            O1 = np.array([0])
+            O2 = np.array([0])
             i=0
             while i < len(xx1)-batch_size:
                 start = i
@@ -70,12 +69,22 @@ def train_neural_network(xx1,xx2):
                 batch_x2 = xx2[start:end]
                 _, c, p1, p2 = sess.run([optimizer, model.loss, model.o1, model.o2], feed_dict={model.x1: batch_x1,model.x2: batch_x2, model.dropout_f: 0.9})
                 epoch_loss += c
-#                O1 = np.append(O1, o1)
-#                O2 = np.append(O2, o2)
+                O1 = np.append(O1, p1)
+                O2 = np.append(O2, p2)
                 i+=batch_size
             print('Epoch', epoch+1, '/',hm_epochs,'Loss:',epoch_loss)
-#    O1 = np.delete(O1, (0))
-#    O2 = np.delete(O2, (0))
-    return p1, p2
+    return O1, O2
                 
 [O1, O2] = train_neural_network(X1,X2)
+O1 = np.delete(O1, (0))
+O2 = np.delete(O2, (0))
+#np.savez("Deep_data", O1=O1, O2=O2)
+
+#with np.load('Deep_data.npz') as data:
+#    O1 = data['O1']
+#    O2 = data['O2']
+#parr= np.append(O1, O2) 
+#parr2 = parr.reshape(2,len(parr)/2)
+#parr2 = parr2.T
+#np.savetxt('Deep_data.csv', parr2, delimiter=',')   
+

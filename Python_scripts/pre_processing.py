@@ -5,6 +5,7 @@ The data pre-processing
 
 import pandas as pd
 import numpy as np
+from sklearn import preprocessing
 
 x1 = pd.ExcelFile("SCD.xlsx")
 df = x1.parse("SelfCare Deidentified")
@@ -74,9 +75,45 @@ for ii in range(len(num_out)):
     
 fin_data = in_df2[['FIN']]
 in_df2=in_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)
-out_df2=out_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)    
-in_df2.to_excel("entry_data.xlsx")
-out_df2.to_excel("exit_data.xlsx")
-fin_data.to_excel("fin.xlsx")    
+out_df2=out_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)
+
+in_data = np.array(in_df2)
+out_data = np.array(out_df2)
+def add_nansigns(in_data):
+    N = np.isnan(in_data)
+    in_data[N]=0
+    N = N.astype(float)
+    New = np.append(in_data, N, axis =1)
+    return New
+    
+np_in = np.isnan(in_data)
+np_out = np.isnan(out_data)
+out_data[np_in]=np.nan
+in_data[np_out]=np.nan
+    
+X1 = add_nansigns(in_data)
+X2 = add_nansigns(out_data)
+X1 = preprocessing.scale(X1)
+X2 = preprocessing.scale(X2)                 
+Fim_entry = np.sum(in_data,axis=1)
+Fim_exit = np.sum(out_data,axis=1)
+
+Fim_entry=np.delete(Fim_entry, np.s_[1150::])
+Fim_exit = np.delete(Fim_exit, np.s_[1150::])
+
+np.savez("Fim_data", Fim_entry=Fim_entry, Fim_exit=Fim_exit)
+np.savez("Pre_processed", X1=X1, X2=X2)
+
+#with np.load('Fim_data.npz') as data:
+#    Fim_entry = data['Fim_entry']
+#    Fim_exit = data['Fim_exit']
+#parr= np.append(Fim_entry, Fim_exit) 
+#parr2 = parr.reshape(2,len(parr)/2)
+#parr2 = parr2.T
+#np.savetxt('Fim_data.csv', parr2, delimiter=',', fmt='%i')   
+    
+    
+
+
 
 
