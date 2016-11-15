@@ -98,11 +98,17 @@ X2 = preprocessing.scale(X2)
 Fim_entry = np.sum(in_data,axis=1)
 Fim_exit = np.sum(out_data,axis=1)
 
-Fim_entry=np.delete(Fim_entry, np.s_[1150::])
-Fim_exit = np.delete(Fim_exit, np.s_[1150::])
+X1 = np.delete(X1,np.s_[1000::], axis=0)
+X2 = np.delete(X2,np.s_[1000::], axis=0)
+
+Fim_entry=np.delete(Fim_entry, np.s_[1000::])
+Fim_exit = np.delete(Fim_exit, np.s_[1000::])
+duration = num_out-num_in
+duration = np.delete(duration, np.s_[1000::])
+
 
 np.savez("Fim_data", Fim_entry=Fim_entry, Fim_exit=Fim_exit)
-np.savez("Pre_processed", X1=X1, X2=X2)
+np.savez("Pre_processed", X1=X1, X2=X2, X3=duration)
 
 #with np.load('Fim_data.npz') as data:
 #    Fim_entry = data['Fim_entry']
