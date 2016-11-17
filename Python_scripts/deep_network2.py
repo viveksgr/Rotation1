@@ -1,15 +1,23 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import cross_validation
+#from sklearn import cross_validation
 
 with np.load('Pre_processed.npz') as data:
     X1 = data['X1']
     X2 = data['X2']
     duration = data['X3']
-
-X1_train, X1_test, X2_train, X2_test = cross_validation.train_test_split(X1, X2, test_size=0.2)
-
+    
+#with np.load('Fim_data.npz') as data2:
+#    Fim_in = data2['In']
+#    Fim_out = data2['Out']
+        
+#X1_train, X1_test, X2_train, X2_test = cross_validation.train_test_split(X1, X2, test_size=0.2)
+X1_train = X1[0:800,:]
+X2_train = X2[0:800,:]
+X1_test = X1[800:1000,:]
+X2_test = X2[800:1000,:]
+duration_train = duration[0:800]
 duration=np.delete(duration, np.s_[:800])
     
 sz = np.shape(X1)
@@ -92,7 +100,7 @@ def train_neural_network(xx1,xx2,xx1_test,xx2_test):
                 i+=batch_size
                 batch_x1 = xx1[start:end]
                 batch_x2 = xx2[start:end]
-                _, c, p1, p2 = sess.run([optimizer, model.loss, model.o1, model.o2], feed_dict={model.x1: batch_x1,model.x2: batch_x2, model.dropout_f: 0.9})
+                _, c, p1, p2 = sess.run([optimizer, model.loss, model.o1, model.o2], feed_dict={model.x1: batch_x1,model.x2: batch_x2, model.dropout_f: 0.8})
                 epoch_loss += c
                 O1 = np.append(O1, p1)
                 O2 = np.append(O2, p2)
@@ -124,13 +132,13 @@ np.savez("Deep_data2", O1=O1, O2=O2, O3=O3)
 #    O31=O21-O11
 #O = (O3-O31)
 
-n, bins, patches = plt.hist(O3_t/(np.std(O3_t)), 40, normed=0, facecolor='green', alpha=0.75)
+n, bins, patches = plt.hist(O3_t/(np.std(O3_t)), 40, normed=0, facecolor='green', alpha=0.87)
 plt.xlabel('Score/duration')
 plt.ylabel('#')
 plt.title('Softsign Activation')
 fig = plt.gcf()
 fig.set_size_inches(18.5, 10.5)
-fig.savefig('Hist_score_soft_dur.png', bbox_inches='tight')
+fig.savefig('Hist_score_soft2_dur.png', bbox_inches='tight')
 
 #plt.figure()
 #plt.scatter(O3/np.std(O3), O31/np.std(O31))
