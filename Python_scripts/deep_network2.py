@@ -8,6 +8,8 @@ with np.load('Pre_processed.npz') as data:
     X2 = data['X2']
     duration = data['X3']
     
+duration = duration.astype(np.float64)
+    
 #with np.load('Fim_data.npz') as data2:
 #    Fim_in = data2['In']
 #    Fim_out = data2['Out']
@@ -36,8 +38,10 @@ class siamese:
     def __init__(self):
         self.x1 = tf.placeholder(tf.float32, shape=(batch_size,sz[1]))
         self.x2 = tf.placeholder(tf.float32, shape=(batch_size,sz[1]))
+        self.x3 = tf.placeholder(tf.float32, shape=(batch_size))
         self.x1_test = tf.placeholder(tf.float32, shape=(test_size,sz[1]))
         self.x2_test = tf.placeholder(tf.float32, shape=(test_size,sz[1]))
+#        self.x3_test = tf.placeholder(tf.float32, shape=(test_size,sz[1]))
         self.dropout_f = tf.placeholder("float")        
         
         with tf.variable_scope("siamese") as scope:
@@ -51,7 +55,8 @@ class siamese:
             self.o2_test = self.build_model_mlp(self.x2_test, self.dropout_f)
       
         #Loss
-        diff = tf.sub(self.o1, self.o2)
+        dur = self.x3
+        diff = tf.div(tf.sub(self.o1, self.o2),dur)
         diff_mean = tf.reduce_mean(diff, 0) 
         diff_var = tf.sub(tf.reduce_mean(tf.pow(-diff,2),0),tf.pow(-diff_mean,2))
         coeff_var = tf.div(diff_mean,tf.sqrt(diff_var))
@@ -83,7 +88,7 @@ class siamese:
 #            return tf.add(tf.matmul(input_,w),b)
                                            
 # Training and executing.
-def train_neural_network(xx1,xx2,xx1_test,xx2_test):
+def train_neural_network(xx1,xx2,xx1_test,xx2_test,dur_tr):
     model = siamese()
     print("Model executed successfully.")
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss=model.loss)
@@ -100,7 +105,8 @@ def train_neural_network(xx1,xx2,xx1_test,xx2_test):
                 i+=batch_size
                 batch_x1 = xx1[start:end]
                 batch_x2 = xx2[start:end]
-                _, c, p1, p2 = sess.run([optimizer, model.loss, model.o1, model.o2], feed_dict={model.x1: batch_x1,model.x2: batch_x2, model.dropout_f: 0.8})
+                batch_x3 = dur_tr[start:end]
+                _, c, p1, p2 = sess.run([optimizer, model.loss, model.o1, model.o2], feed_dict={model.x1: batch_x1,model.x2: batch_x2,model.x3: batch_x3, model.dropout_f: 0.87})
                 epoch_loss += c
                 O1 = np.append(O1, p1)
                 O2 = np.append(O2, p2)
@@ -118,7 +124,7 @@ def train_neural_network(xx1,xx2,xx1_test,xx2_test):
     
     
                 
-[O1, O2, O1_t, O2_t] = train_neural_network(X1_train, X2_train, X1_test, X2_test)
+[O1, O2, O1_t, O2_t] = train_neural_network(X1_train, X2_train, X1_test, X2_test, duration_train)
 O1 = np.delete(O1, (0))
 O2 = np.delete(O2, (0))
 O3=O2-O1
@@ -132,18 +138,19 @@ np.savez("Deep_data2", O1=O1, O2=O2, O3=O3)
 #    O31=O21-O11
 #O = (O3-O31)
 
-n, bins, patches = plt.hist(O3_t/(np.std(O3_t)), 40, normed=0, facecolor='green', alpha=0.87)
+n, bins, patches = plt.hist(O3_t/(np.std(O3_t)), 50, normed=0, facecolor='green', alpha=0.8)
 plt.xlabel('Score/duration')
 plt.ylabel('#')
 plt.title('Softsign Activation')
 fig = plt.gcf()
 fig.set_size_inches(18.5, 10.5)
-fig.savefig('Hist_score_soft2_dur.png', bbox_inches='tight')
+fig.savefig('7.png', bbox_inches='tight')
 
-#plt.figure()
-#plt.scatter(O3/np.std(O3), O31/np.std(O31))
-#plt.xlabel('Score-1')
-#plt.ylabel('Score-2')
-#fig2=plt.gcf()
-#fig2.set_size_inches(18.5,10.5)
-#fig2.savefig('Scatter_score.png')
+plt.figure()
+plt.plot(duration, O3_t,'.'
+)
+plt.xlabel('Duration')
+plt.ylabel('Score/duration')
+fig2=plt.gcf()
+fig2.set_size_inches(18.5,10.5)
+fig2.savefig('Scatter_score.png')
