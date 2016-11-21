@@ -5,7 +5,7 @@ The data pre-processing
 
 import pandas as pd
 import numpy as np
-from sklearn import preprocessing
+#from sklearn import preprocessing
 
 x1 = pd.ExcelFile("SCD.xlsx")
 df = x1.parse("SelfCare Deidentified")
@@ -77,6 +77,7 @@ fin_data = in_df2[['FIN']]
 in_df2=in_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)
 out_df2=out_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)
 
+# Handle Nans
 in_data = np.array(in_df2)
 out_data = np.array(out_df2)
 def add_nansigns(in_data):
@@ -91,16 +92,15 @@ np_out = np.isnan(out_data)
 out_data[np_in]=np.nan
 in_data[np_out]=np.nan
 
-num_col = np.shape(in_data)[1]
+#num_col = np.shape(in_data)[1]
     
 X1 = add_nansigns(in_data)
 X2 = add_nansigns(out_data)
-X3=np.append(X1,X2, axis=1)
-X3 = preprocessing.scale(X3)
-X2 = np.delete(X3, np.s_[:2*num_col],axis=1)
-X1 = np.delete(X3, np.s_[2*num_col:],axis=1)
-#X1 = preprocessing.scale(X1)
-#X2 = preprocessing.scale(X2)                 
+X3=np.append(X1,X2, axis=0)
+#X3 = preprocessing.scale(X3)
+X2 = np.delete(X3, np.s_[:len(X1)],axis=0)
+X1 = np.delete(X3, np.s_[len(X1):],axis=0)
+              
 
 X1 = np.delete(X1,np.s_[1000::], axis=0)
 X2 = np.delete(X2,np.s_[1000::], axis=0)
