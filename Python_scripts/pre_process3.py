@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """
+Created on Mon Nov 21 17:52:19 2016
+
+@author: viveksagar
+"""
+"""
 Created on Fri Nov 18 15:38:56 2016
 
 @author: viveksagar
@@ -8,7 +13,7 @@ Created on Fri Nov 18 15:38:56 2016
 
 import pandas as pd
 import numpy as np
-from sklearn import preprocessing
+#from sklearn import preprocessing
 
 x1 = pd.ExcelFile("SCD.xlsx")
 df = x1.parse("SelfCare Deidentified")
@@ -16,7 +21,7 @@ df = x1.parse("SelfCare Deidentified")
 # Input values, units are number of days.
 batch_size = 7
 batch_size_out = batch_size;
-exclusion_days = 15;
+exclusion_days = 22;
 
 # This finds the row corresponding to the first day of each patient.
 df['dFIN'] = df['FIN']-df['FIN'].shift(1) 
@@ -47,14 +52,24 @@ locus_in = df.loc[df['dFIN'] >0]
 num_in = locus_in.index.values
 locus_out = df.loc[df['dFIN2'] >0]
 num_out = locus_out.index.values
+
+rem_list2 =[]
+for ii in range(len(num_in)):
+    for jj in range(batch_size):
+        temp = num_in[ii]+jj
+        rem_list2.append(temp)
+df = df.drop(rem_list2)
+
+num_in=num_in+batch_size
 duration = (num_out-num_in).astype(np.float64)
 num_weeks = np.remainder(duration,batch_size)+1
-rem_list2 = []
+rem_list3 = []
 for ii in range(len(num_out)):
     for jj in range(num_weeks[ii].astype(np.int64)):
         temp = num_out[ii]-num_weeks[ii]+jj+1
-        rem_list2.append(temp)
-df = df.drop(rem_list2)
+        rem_list3.append(temp)
+df = df.drop(rem_list3)
+
 num_weeks = np.floor_divide(duration,batch_size)
 num_out = num_in+batch_size*num_weeks-1
 
@@ -64,8 +79,7 @@ df2 = pd.DataFrame()
 for ii in range(np.floor(len(df)/batch_size).astype(np.int64)):
     temp = df.ix[ii*batch_size:(ii+1)*batch_size-1,:]
     temp2 = temp.max(axis=0, skipna=True)
-    df2=df2.append(temp2, ignore_index=True)   
-
+    df2=df2.append(temp2, ignore_index=True)  
 
 in_df = pd.DataFrame()
 rem3 = []
@@ -109,5 +123,5 @@ X3=np.append(X1,X2, axis=0)
 X2 = np.delete(X3, np.s_[:len(X1)],axis=0)
 X1 = np.delete(X3, np.s_[len(X1):],axis=0)
               
-
 np.savez("Pre_processed", X1=X1, X2=X2, X3=week_l)
+

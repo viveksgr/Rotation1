@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Nov 18 11:49:33 2016
+
+@author: viveksagar
+"""
+
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,31 +14,32 @@ with np.load('Pre_processed.npz') as data:
     X1 = data['X1']
     X2 = data['X2']
     duration = data['X3']
-    
+
+batch_size = 100
+length = len(X1)
+split_percent = 80
+split = (split_percent/100)*length
+split = (split-np.mod(split,batch_size)).astype(np.int64)       
+split2 = (length-np.mod(length,batch_size)).astype(np.int64)
+        
+X1_train = X1[0:split,:]
+X2_train = X2[0:split,:]
+X1_test = X1[split:split2,:]
+X2_test = X2[split:split2,:]
+duration_train = duration[0:split]
+duration=duration[split:split2]
 duration = duration.astype(np.float64)
     
-#with np.load('Fim_data.npz') as data2:
-#    Fim_in = data2['In']
-#    Fim_out = data2['Out']
-        
-#X1_train, X1_test, X2_train, X2_test = cross_validation.train_test_split(X1, X2, test_size=0.2)
-X1_train = X1[0:800,:]
-X2_train = X2[0:800,:]
-X1_test = X1[800:1000,:]
-X2_test = X2[800:1000,:]
-duration_train = duration[0:800]
-duration=np.delete(duration, np.s_[:800])
-    
 sz = np.shape(X1)
-batch_size = 100
-test_size = 200
+
+test_size = split2-split
 hm_epochs = 1000
-nn1 = 32
-nn2 = 16
+nn1 = 64
+nn2 = 32
 nn3 = 8
 nn4 = 16
-nn5 = 32
-nn6 = 1
+nn5 = 1
+
 
 
 # Network structure and the loss function.
@@ -76,9 +84,9 @@ class siamese:
         l4 = self.mlp(l3,nn3,nn4,"l4")
         l4 = tf.nn.dropout(l4,_dropout)
         l5 = self.mlp(l4,nn4,nn5,"l5")
-        l5 = tf.nn.dropout(l5,_dropout)
-        l6 = self.mlp(l5,nn5,nn6,"l6")
-        return l6        
+#        l5 = tf.nn.dropout(l5,_dropout)
+#        l6 = self.mlp(l5,nn5,nn6,"l6")
+        return l5        
 
     def mlp(self, input_,input_dim,output_dim,name):
         with tf.variable_scope(name, reuse=None):
@@ -142,7 +150,7 @@ plt.ylabel('#')
 plt.title('Softsign Activation')
 fig = plt.gcf()
 fig.set_size_inches(18.5, 10.5)
-fig.savefig('15.png', bbox_inches='tight')
+fig.savefig('deep_score_dur.png', bbox_inches='tight')
 
 plt.figure()
 plt.scatter(fim,O3_t)
@@ -150,12 +158,23 @@ plt.xlabel('Fim')
 plt.ylabel('Deep')
 fig2=plt.gcf()
 fig2.set_size_inches(18.5,10.5)
-fig2.savefig('Scatter_score.png')
+fig2.savefig('fim_deep_dur.png')
 
 plt.figure()
-plt.plot(duration, O3_t,'.')
-plt.xlabel('Duration')
-plt.ylabel('Score/duration')
+n, bins, patches = plt.hist(fim, 40, normed=0, facecolor='green', alpha=0.85)
+plt.xlabel('Score')
+plt.ylabel('#')
+plt.title('Fim score')
+fig = plt.gcf()
+fig.set_size_inches(18.5, 10.5)
+fig.savefig('fim.png', bbox_inches='tight')
+
+plt.figure()
+plt.scatter(duration,O3_t)
+plt.xlabel('Deep_score')
+plt.ylabel('Duration')
 fig2=plt.gcf()
 fig2.set_size_inches(18.5,10.5)
-fig2.savefig('Score_duration.png')
+fig2.savefig('deep_dur_vs_dur.png')
+
+

@@ -14,23 +14,25 @@ with np.load('Pre_processed.npz') as data:
     X1 = data['X1']
     X2 = data['X2']
     duration = data['X3']
-    
-#with np.load('Fim_data.npz') as data2:
-#    Fim_in = data2['In']
-#    Fim_out = data2['Out']
+
+batch_size = 100
+length = len(X1)
+split_percent = 80
+split = (split_percent/100)*length
+split = (split-np.mod(split,batch_size)).astype(np.int64)       
+split2 = (length-np.mod(length,batch_size)).astype(np.int64)
         
-#X1_train, X1_test, X2_train, X2_test = cross_validation.train_test_split(X1, X2, test_size=0.2)
-X1_train = X1[0:800,:]
-X2_train = X2[0:800,:]
-X1_test = X1[800:1000,:]
-X2_test = X2[800:1000,:]
-duration_train = duration[0:800]
-duration=np.delete(duration, np.s_[:800])
+X1_train = X1[0:split,:]
+X2_train = X2[0:split,:]
+X1_test = X1[split:split2,:]
+X2_test = X2[split:split2,:]
+duration_train = duration[0:split]
+duration=duration[split:split2]
 duration = duration.astype(np.float64)
     
 sz = np.shape(X1)
-batch_size = 100
-test_size = 200
+
+test_size = split2-split
 hm_epochs = 1000
 nn1 = 64
 nn2 = 32
@@ -135,7 +137,7 @@ O3_t=O3_t/np.std(O3_t)
 np.savez("Deep_data2", O1=O1, O2=O2, O3=O3)
 
 t = len(np.where(O3_t<0)[0])
-fim = np.sum(X2_test-X1_test,axis=1)
+fim = np.sum(X2_test[:,:21]-X1_test[:,:21],axis=1)
 t_2 = len(np.where(fim<0)[0])
 
 n, bins, patches = plt.hist(O3_t, 40, normed=0, facecolor='green', alpha=0.85)
@@ -144,7 +146,7 @@ plt.ylabel('#')
 plt.title('Softsign Activation')
 fig = plt.gcf()
 fig.set_size_inches(18.5, 10.5)
-fig.savefig('15.png', bbox_inches='tight')
+fig.savefig('deep_score.png', bbox_inches='tight')
 
 plt.figure()
 plt.scatter(fim,O3_t)
@@ -152,4 +154,29 @@ plt.xlabel('Fim')
 plt.ylabel('Deep')
 fig2=plt.gcf()
 fig2.set_size_inches(18.5,10.5)
-fig2.savefig('Scatter_score.png')
+fig2.savefig('fim_deep.png')
+
+plt.figure()
+n, bins, patches = plt.hist(fim, 40, normed=0, facecolor='green', alpha=0.85)
+plt.xlabel('Score')
+plt.ylabel('#')
+plt.title('Fim score')
+fig = plt.gcf()
+fig.set_size_inches(18.5, 10.5)
+fig.savefig('fim.png', bbox_inches='tight')
+
+plt.figure()
+plt.scatter(duration,O3_t)
+plt.xlabel('Deep_score')
+plt.ylabel('Duration')
+fig2=plt.gcf()
+fig2.set_size_inches(18.5,10.5)
+fig2.savefig('deep_vs_dur.png')
+
+plt.figure()
+plt.scatter(duration,fim)
+plt.ylabel('FIM_score')
+plt.xlabel('Duration')
+fig2=plt.gcf()
+fig2.set_size_inches(18.5,10.5)
+fig2.savefig('fim_week2.png')
