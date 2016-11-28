@@ -5,7 +5,7 @@ The data pre-processing
 
 import pandas as pd
 import numpy as np
-#from sklearn import preprocessing
+from sklearn import preprocessing
 
 x1 = pd.ExcelFile("SCD.xlsx")
 df = x1.parse("SelfCare Deidentified")
@@ -97,25 +97,25 @@ in_data[np_out]=np.nan
 X1 = add_nansigns(in_data)
 X2 = add_nansigns(out_data)
 X3=np.append(X1,X2, axis=0)
-#X3 = preprocessing.scale(X3)
+X3 = preprocessing.scale(X3)
 X2 = np.delete(X3, np.s_[:len(X1)],axis=0)
 X1 = np.delete(X3, np.s_[len(X1):],axis=0)
-              
 
-X1 = np.delete(X1,np.s_[1000::], axis=0)
-X2 = np.delete(X2,np.s_[1000::], axis=0)
 
 duration = num_out-num_in
-duration = np.delete(duration, np.s_[1000::])
 
 in_data = np.array(in_df2)
 out_data = np.array(out_df2)
-in_data=np.delete(in_data, np.s_[1000::],axis=0)
-out_data=np.delete(out_data, np.s_[1000::],axis=0)
 
-np.savez("Fim_data", In=in_data, Out=out_data)
+#np.savez("Fim_data", In=in_data, Out=out_data)
 np.savez("Pre_processed", X1=X1, X2=X2, X3=duration)
 
+
+#X1 = np.delete(X1,np.s_[1000::], axis=0)
+#X2 = np.delete(X2,np.s_[1000::], axis=0)
+#duration = np.delete(duration, np.s_[1000::])
+#in_data=np.delete(in_data, np.s_[1000::],axis=0)
+#out_data=np.delete(out_data, np.s_[1000::],axis=0)
 #with np.load('Fim_data.npz') as data:
 #    Fim_entry = data['Fim_entry']
 #    Fim_exit = data['Fim_exit']
