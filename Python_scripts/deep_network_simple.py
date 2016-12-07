@@ -18,12 +18,13 @@ split_percent = 80
 #split = (split_percent/100)*length
 #split = (split-np.mod(split,batch_size)).astype(np.int64)       
 #split2 = (length-np.mod(length,batch_size)).astype(np.int64)
-split=3000
-split2=3600
+split=1500
+split2=2000
 
 num_col = X1.shape[1]
 X3 = np.concatenate((X1,X2,(np.matrix(duration)).T), axis=1)
-X3 = np.roll(X3,2*(split2-split),axis=0)
+X3 = np.delete(X3, np.s_[split2::],axis=0)
+X3 = np.roll(X3,3*(split2-split),axis=0)
 X1 = X3[:,0:num_col]
 X2 = X3[:,num_col:-1]
 duration = np.squeeze(np.asarray(X3[:,-1])) 
@@ -40,8 +41,8 @@ duration = duration.astype(np.float64)
 sz = np.shape(X1)
 
 test_size = split2-split
-hm_epochs = 1000
-hm_ensemble = 20
+hm_epochs = 800
+hm_ensemble = 10
 nn1 = 64
 nn2 = 32
 nn3 = 8
@@ -149,7 +150,7 @@ num_col = (np.asarray(np.shape(X1)[1]/2)).astype(np.int64)
 
 t = 100-100*len(np.where(O3_t<0)[0])/len(X1_test)
 
-np.savez("Deep_data_simple3", O1=O1_t, O2=O2_t, O3=O3_t, t=t)
+np.savez("Deep_data_simple4", O1=O1_t, O2=O2_t, O3=O3_t, t=t)
 
 #n, bins, patches = plt.hist(O3_t, 40, normed=0, facecolor='green', alpha=0.85)
 #plt.xlabel('Score')

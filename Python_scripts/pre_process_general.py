@@ -134,6 +134,6 @@ name_col = counting.loc[counting<0.05*len(df)]
 name_col2 = name_col.index
 df= df.drop(name_col2,1)
   
-[X1, X2, week_l,fim,loc] = pre_process(df,1)
-np.savez("Fim_week1", Fim=fim, index = loc)
+[X1, X2, week_l,fim,loc] = pre_process(df,2)
+np.savez("Fim_week2", Fim=fim, index = loc)
 np.savez("Pre_processed", X1=X1, X2=X2, X3=week_l)

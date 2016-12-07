@@ -153,9 +153,9 @@ O3_t=O3_t/np.std(O3_t)
 np.savez("Deep_data_dur", O1=O1_t, O2=O2_t, O3=O3_t)
 np.savez("Fim_data1",X1=X1_test,X2=X2_test,duration=duration)
 
-
+num_col = np.asarray(np.shape(X1)[1]/2).astype(np.int64)
 t = len(np.where(O3_t<0)[0])
-fim = np.sum(X2_test-X1_test,axis=1)
+fim = np.sum(X2[:,:num_col]-X1[:,:num_col],axis=1)
 t_2 = len(np.where(fim<0)[0])
 
 

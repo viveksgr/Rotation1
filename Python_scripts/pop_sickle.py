@@ -14,15 +14,17 @@ for ii in range(5):
     with np.load('Deep_data_simple'+str(ii+1)+'.npz') as data:
         O3_t[:,ii] = data['O3']
         
-with np.load('Fim_data'+str(ii+1)+'.npz') as data2:
-        X1_test = data2['X1']
-        X2_test = data2['X2']
-        fim[:,ii] = np.squeeze(np.asarray(np.sum(X2_test[:,:num_col]-X1_test[:,:num_col],axis=1)))
-        duration[:,ii]=data2['duration']
+with np.load('Fim_week1.npz') as data2:
+        fim = data2['Fim']
+
+with np.load('Pre_processed.npz') as data2:
+        duration = data2['X3']
+
         
 O3_t=O3_t.reshape(3000)
-fim = fim.reshape(3000)
-duration = duration.reshape(3000)
+fim= np.delete(fim, np.s_[3000:],axis=0)
+#t_2 = 100-100*(len(np.where(fim==0)[0]))/(len(fim))
+duration = np.delete(duration, np.s_[3000:],axis=0)
 
 def ghadha_ghoda(vec, week_l):
     week_l = week_l.astype(np.int64)
@@ -81,3 +83,8 @@ fig2=plt.gcf()
 fig2.set_size_inches(18.5,10.5)
 fig2.savefig('Fim_vs_dur.png')
 
+plt.figure()
+plt.plot(fim,O3_t,'.')
+fig2=plt.gcf()
+fig2.set_size_inches(18.5,10.5)
+fig2.savefig('Temp.png')
