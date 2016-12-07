@@ -6,9 +6,16 @@ The data pre-processing
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing
+from scipy.spatial import distance
 
-x1 = pd.ExcelFile("SCD.xlsx")
+x1 = pd.ExcelFile("SCD2.xlsx")
 df = x1.parse("SelfCare Deidentified")
+
+counting = df.count(axis=0)
+name_col = counting.loc[counting<0.05*len(df)]
+name_col2 = name_col.index
+df2 = df.drop(name_col2,1)
+df = df2
 
 # Input values, units are number of days.
 batch_size = 7
@@ -74,9 +81,11 @@ for ii in range(len(num_out)):
     out_df2=out_df2.append(temp2, ignore_index=True)
     
 fin_data = in_df2[['FIN']]
-in_df2=in_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)
-out_df2=out_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)
-
+#in_df2=in_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)
+#out_df2=out_df2.drop(['dFIN','assessmentDay','FIN','dFIN2'],1)
+in_df2=in_df2.drop(['dFIN','FIN','dFIN2','percentageFallRisk'],1)
+out_df2=out_df2.drop(['dFIN','FIN','dFIN2','percentageFallRisk'],1)
+out_df2 = out_df2.replace('None', np.nan)
 # Handle Nans
 in_data = np.array(in_df2)
 out_data = np.array(out_df2)
@@ -93,21 +102,31 @@ out_data[np_in]=np.nan
 in_data[np_out]=np.nan
 
 #num_col = np.shape(in_data)[1]
-    
 X1 = add_nansigns(in_data)
 X2 = add_nansigns(out_data)
 X3=np.append(X1,X2, axis=0)
 X3 = preprocessing.scale(X3)
 X2 = np.delete(X3, np.s_[:len(X1)],axis=0)
 X1 = np.delete(X3, np.s_[len(X1):],axis=0)
-
-
+num_col = X1.shape[1]
 duration = num_out-num_in
 
-in_data = np.array(in_df2)
-out_data = np.array(out_df2)
+X3 = np.concatenate((X1,X2,(np.matrix(duration)).T), axis=1)
+loc = np.asarray(np.matrix(np.random.permutation(len(X3))).T)
+X3=X3[loc[:,0],:]
+X1 = X3[:,0:num_col]
+X2 = X3[:,num_col:-1]
+duration = np.squeeze(np.asarray(X3[:,-1])) 
 
-#np.savez("Fim_data", In=in_data, Out=out_data)
+in_data2 = add_nansigns(in_data)
+out_data2 = add_nansigns(out_data)
+fin_data=in_data2[loc[:,0],:]
+fout_data=out_data2[loc[:,0],:]
+fim = np.squeeze(np.asarray(np.sum(fin_data-fout_data,axis=1)))
+
+t_2 = 100-100*(len(np.where(fim<0)[0]))/(len(X1))
+
+np.savez("Fim_data_vanilla", In=fin_data, Out=fout_data, Fim=fim, t_2=t_2, index = loc)
 np.savez("Pre_processed", X1=X1, X2=X2, X3=duration)
 
 

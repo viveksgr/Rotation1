@@ -207,8 +207,8 @@ def ghadha_ghoda(vec, week_l):
         mean_list.append(temp_mean)
         stdv_list.append(temp_dev)
     mean_list = np.asarray(mean_list)
-    stdv_list = np.asarray(stdv_list)
     length = end_ind-start_ind
+    stdv_list = np.asarray(stdv_list)/np.sqrt(length)
     return mean_list, stdv_list, x_axis, length
 #
 #duration = np.floor_divide(duration,7)
